@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Irrigation System</title>
+<script type="text/javascript" src="jquery-3.1.1.min.js"></script>
+<script type="text/javascript" src="smartgarden.js"></script>
+<style>
+.wrapper {
+	display: grid;
+	grid-template-columns: 100px 10px 100px 10px 100px;
+	grid-template-rows: auto 10px auto;
+	background-color: #fff;
+	color: #444;
+}
+
+.box {
+	background-color: #FFFFFF;
+	border-radius: 5px;
+	padding: 50px;
+}
+
+table {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+th, td {
+	text-align: left;
+	padding: 8px;
+}
+
+tr:nth-child(even) {
+	background-color: #f2f2f2
+}
+
+th {
+	background-color: #000033;
+	color: white;
+}
+
+.button {
+	display: inline-block;
+	padding: 15px 25px;
+	font-size: 24px;
+	cursor: pointer;
+	text-align: center;
+	text-decoration: none;
+	outline: none;
+	color: #fff;
+	background-color: #000033;
+	border: none;
+	border-radius: 15px;
+	box-shadow: 0 9px #999;
+}
+
+.button:hover {
+	background-color: #3366cc
+}
+
+.button:active {
+	background-color: #3399ff;
+	box-shadow: 0 5px #666;
+	transform: translateY(4px);
+}
+
+html {
+  text-align: center;
+}
+</style>
+</head>
+
+<body>
+
+	<div>
+		<span class="box c"
+			style="width: 600px; height: 150px; font-size: 450%; font-weight: bold; text-align: center; margin: auto"
+			id="status"> </span>
+
+		<div class="box a">
+			<input type="button" class="button" value="Start Irrigate"
+				id="start_irrigation"
+				style="width: 600px; height: 150px; font-size: 450%; font-weight: bold" />
+		</div>
+		<div class="box b">
+			<input type="button" class="button" value="Stop Irrigate"
+				id="stop_irrigation"
+				style="width: 600px; height: 150px; font-size: 450%; font-weight: bold" />
+		</div>
+		<div class="box c">
+			<input type="button" class="button" value="View Status"
+				id="view_status"
+				style="width: 600px; height: 150px; font-size: 450%; font-weight: bold" />
+		</div>
+
+		<div class="box d">
+			<input type="button" class="button" value="View History"
+				id="view_history"
+				style="width: 600px; height: 150px; font-size: 450%; font-weight: bold" />
+		</div>
+		
+		<div class="box f">
+		<span class="box c"
+			style="width: 600px; height: 150px; font-size: 450%; font-weight: bold; text-align: center; margin: auto">
+			Irrigation history </span>
+		</div>
+		<div class="box d"
+			style="font-size: 450%; font-weight: bold; text-align: center; margin: auto">
+			<table align="center" border="1" id="history">
+				
+					<tr>
+						<th width="20%">id</th>
+						<th width="40%">start</th>
+						<th width="40%">end</th>
+					</tr>
+                                <tbody>        
+				</tbody>
+			</table>
+		</div>
+
+	</div>
+</body>
+
+</html>
