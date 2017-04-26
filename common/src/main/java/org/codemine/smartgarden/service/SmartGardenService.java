@@ -262,7 +262,7 @@ public class SmartGardenService {
         }
         try {
             JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-            jdbcTemplate.update("update irrigation_history set end_time=now(),image_filename=?,water_volume_ml where id=? and end_time is null",
+            jdbcTemplate.update("update irrigation_history set end_time=now(),image_filename=?,water_volume_ml=? where id=? and end_time is null",
                     new Object[]{imageFilename, this.waterFlowSensor.readOutputValue().getTotalMillilitre(), historyId});
         } catch (Throwable t) {
             logger.error("update database", t);

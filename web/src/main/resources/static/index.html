@@ -90,10 +90,10 @@
                                         <tr><td style="vertical-align: top;">Soil Dry Level</td><td><span id="soil_dryLevel"></span></td></tr>                                        
                                         <tr><td style="vertical-align: top;">Water Flow</td><td><span id="waterflow"></span></td></tr>
 
-                                      
+
                                         <tr><td style="vertical-align: top;">Battery Voltage</td><td><span id="battery_voltage"></span></td></tr>
                                         <tr><td style="vertical-align: top;">Battery Current</td><td><span id="battery_current"></span></td></tr>
-                                          <tr><td style="vertical-align: top;">Battery Level</td><td>
+                                        <tr><td style="vertical-align: top;">Battery Level</td><td>
                                                 <div class="progress">
                                                     <span id="battery_level" class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 0%">0
                                                     </span>
@@ -122,7 +122,7 @@
                         <div class="col-sm-4">
                             <div class="panel panel-red">
                                 <div class="panel-heading">
-                                    <h3 class="panel-title"><i class="fa fa-bar-chart-o"></i> Average Dry Level</h3>
+                                    <h3 class="panel-title"><i class="fa fa-bar-chart-o"></i> Dry Level</h3>
                                 </div>
                                 <div class="panel-body">
                                     <div class="flot-chart" id="average_drylevel_trend">
@@ -132,6 +132,18 @@
                             </div>
                         </div>
                         <div class="col-sm-4">
+                            <div class="panel panel-success">
+                                <div class="panel-heading">
+                                    <h3 class="panel-title"><i class="fa fa-bar-chart-o"></i>Solar Power</h3>
+                                </div>
+                                <div class="panel-body">
+                                    <div class="flot-chart" id="solar_power_trend">
+                                        <div class="flot-chart-content" id="flot-line-chart"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-8">
                             <div class="panel panel-danger">
                                 <div class="panel-heading">
                                     <h3 class="panel-title"><i class="fa fa-money fa-fw"></i> Irrigation History</h3>
