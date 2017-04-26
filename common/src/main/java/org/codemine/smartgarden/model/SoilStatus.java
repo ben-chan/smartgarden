@@ -16,9 +16,9 @@ public class SoilStatus {
 
     private long id;
     private Date datetime;
-    private ModbusSoilHumiditySensor.Data dryLevelAndTemperature;
+    private ModbusSoilHumiditySensor.OutputValue dryLevelAndTemperature;
     
-    public SoilStatus(long id, Date datetime, ModbusSoilHumiditySensor.Data dryLevelAndTemperature) {
+    public SoilStatus(long id, Date datetime, ModbusSoilHumiditySensor.OutputValue dryLevelAndTemperature) {
         this.id = id;
         this.datetime = datetime;
         this.dryLevelAndTemperature = dryLevelAndTemperature;
@@ -59,14 +59,14 @@ public class SoilStatus {
     /**
      * @return the dryLevelAndTemperature
      */
-    public ModbusSoilHumiditySensor.Data getDryLevelAndTemperature() {
+    public ModbusSoilHumiditySensor.OutputValue getDryLevelAndTemperature() {
         return dryLevelAndTemperature;
     }
 
     /**
      * @param dryLevelAndTemperature the dryLevelAndTemperature to set
      */
-    public void setDryLevelAndTemperature(ModbusSoilHumiditySensor.Data dryLevelAndTemperature) {
+    public void setDryLevelAndTemperature(ModbusSoilHumiditySensor.OutputValue dryLevelAndTemperature) {
         this.dryLevelAndTemperature = dryLevelAndTemperature;
     }
    

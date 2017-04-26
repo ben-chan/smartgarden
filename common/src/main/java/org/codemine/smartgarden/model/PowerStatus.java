@@ -15,10 +15,10 @@ import com.codemine.iot.device.sensor.INA219VoltageCurrentSensor;
 public class PowerStatus {
     private int id;
     private Date dateTIme;
-    private INA219VoltageCurrentSensor.Data voltageAndCurrent;
+    private INA219VoltageCurrentSensor.OutputValue voltageAndCurrent;
     private int batteryLevelInPercent;
 
-    public PowerStatus(int id, Date dateTIme, INA219VoltageCurrentSensor.Data voltageAndCurrent) {
+    public PowerStatus(int id, Date dateTIme, INA219VoltageCurrentSensor.OutputValue voltageAndCurrent) {
         this.id = id;
         this.dateTIme = dateTIme;
         this.voltageAndCurrent = voltageAndCurrent;
@@ -45,7 +45,7 @@ public class PowerStatus {
     /**
      * @return the voltageAndCurrent
      */
-    public INA219VoltageCurrentSensor.Data getVoltageAndCurrent() {
+    public INA219VoltageCurrentSensor.OutputValue getVoltageAndCurrent() {
         return voltageAndCurrent;
     }
 
@@ -66,7 +66,7 @@ public class PowerStatus {
     /**
      * @param voltageAndCurrent the voltageAndCurrent to set
      */
-    public void setVoltageAndCurrent(INA219VoltageCurrentSensor.Data voltageAndCurrent) {
+    public void setVoltageAndCurrent(INA219VoltageCurrentSensor.OutputValue voltageAndCurrent) {
         this.voltageAndCurrent = voltageAndCurrent;
     }
 

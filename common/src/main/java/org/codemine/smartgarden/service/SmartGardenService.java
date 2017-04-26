@@ -74,9 +74,9 @@ public class SmartGardenService {
     private String mediaFileDirectory = "/tmp";
     private Camera camera = null;
 
-    private Sensor<ModbusSoilHumiditySensor.Data> soilHumiditySensor = null;
-    private EventDrivenSensor<HallEffectWaterFlowSensor.Data> waterFlowSensor = null;
-    private Sensor<INA219VoltageCurrentSensor.Data> voltageCurrentSensor = null;
+    private Sensor<ModbusSoilHumiditySensor.OutputValue> soilHumiditySensor = null;
+    private EventDrivenSensor<HallEffectWaterFlowSensor.OutputValue> waterFlowSensor = null;
+    private Sensor<INA219VoltageCurrentSensor.OutputValue> voltageCurrentSensor = null;
 
     private Valve waterValve = null;
     private NotificationService notificationService = null;
@@ -95,10 +95,10 @@ public class SmartGardenService {
 
         if (testing) {
             this.camera = new MockCamera();
-            this.soilHumiditySensor = new MockPollingSensor<>(new ModbusSoilHumiditySensor.Data(30, 2600));
+            this.soilHumiditySensor = new MockPollingSensor<>(new ModbusSoilHumiditySensor.OutputValue(30, 2600));
             this.waterValve = new MockValve();
-            this.waterFlowSensor = new MockEventDrivenSensor<>(new HallEffectWaterFlowSensor.Data(BigDecimal.valueOf(299)));
-            this.voltageCurrentSensor = new MockPollingSensor<>(new INA219VoltageCurrentSensor.Data(2.0, 3.0));
+            this.waterFlowSensor = new MockEventDrivenSensor<>(new HallEffectWaterFlowSensor.OutputValue(BigDecimal.valueOf(299)));
+            this.voltageCurrentSensor = new MockPollingSensor<>(new INA219VoltageCurrentSensor.OutputValue(2.0, 3.0));
         } else {
             this.camera = new USBCamera(new Dimension(Integer.parseInt(config.get("image.width")), Integer.parseInt(config.get("image.height"))));
             this.soilHumiditySensor = new ModbusSoilHumiditySensor(config.get("soil.sensorSerialPortName"));
@@ -180,7 +180,7 @@ public class SmartGardenService {
             int temperatureSum = 0;
             for (int i = 0; i < soilDryLevelPollCount; ++i) {
 
-                ModbusSoilHumiditySensor.Data humidtyAndTemperature = this.soilHumiditySensor.readData();
+                ModbusSoilHumiditySensor.OutputValue humidtyAndTemperature = this.soilHumiditySensor.readOutputValue();
                 temperatureSum += humidtyAndTemperature.getTemperatureInCelsius();
                 dryLevelSum += humidtyAndTemperature.getDryLevel();
                 Thread.sleep(soilDryLevelPollFrequencyInMS);
@@ -194,7 +194,7 @@ public class SmartGardenService {
                 this.startIrrigationAsync(dataSource);
             }
             JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-            String sql = "INSERT INTO soil_status (datetime,average_drylevel,average_temperature) values(now(),?,?)";
+            String sql = "INSERT INTO soil_status (datetime,drylevel,temperature) values(now(),?,?)";
             jdbcTemplate.update(sql, new Object[]{averageDryLevel, averageTemperature});
         } catch (Throwable t) {
             logger.fatal("startIrrigationWhenLowHumdity", t);
@@ -241,7 +241,7 @@ public class SmartGardenService {
 
                         notificationService.sendAsyncEmail("Irrigation Finished",
                                 String.format("HistoryId=%s, time=%s waterflow=%s ml", historyId, new Date().toString(),
-                                        self.waterFlowSensor.readData().getTotalMillilitre().toBigInteger()
+                                        self.waterFlowSensor.readOutputValue().getTotalMillilitre().toBigInteger()
                                 ));
 
                     } catch (Throwable t) {
@@ -266,16 +266,17 @@ public class SmartGardenService {
         if (voltage < 10.5) {
             return 0.0;
         }
-        if (voltage > 13.5) {
-            return 100;
+        if (voltage >= 10.5 && voltage < 11.5) {
+            return 25.0;
         }
-
-        if (voltage > 11.5) {
+        if (voltage >= 11.5 && voltage < 12.5) {
             return 50;
         }
-
-        if (voltage > 12.5) {
+        if (voltage >= 12.5 && voltage < 13.5) {
             return 75;
+        }
+        if (voltage >= 13.5) {
+            return 100;
         }
         return -1;
     }
@@ -313,17 +314,17 @@ public class SmartGardenService {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         return jdbcTemplate.query(String.format("select id,drylevel,temperature,datetime from soil_status order by id desc limit %s", itemCount),
                 new RowMapper<SoilStatus>() {
-                    @Override
-                    public SoilStatus mapRow(ResultSet rs, int i) throws SQLException {
-                        SoilStatus soilStatus = new SoilStatus();
-                        soilStatus.setId(rs.getLong("id"));
-                        soilStatus.setDatetime(new Timestamp(rs.getTimestamp("datetime").getTime()));
-                        ModbusSoilHumiditySensor.Data drylevelAndTemperature = new ModbusSoilHumiditySensor.Data(rs.getInt("temperature"), rs.getInt("drylevel"));
-                        soilStatus.setDryLevelAndTemperature(drylevelAndTemperature);
-                        return soilStatus;
-                    }
+            @Override
+            public SoilStatus mapRow(ResultSet rs, int i) throws SQLException {
+                SoilStatus soilStatus = new SoilStatus();
+                soilStatus.setId(rs.getLong("id"));
+                soilStatus.setDatetime(new Timestamp(rs.getTimestamp("datetime").getTime()));
+                ModbusSoilHumiditySensor.OutputValue drylevelAndTemperature = new ModbusSoilHumiditySensor.OutputValue(rs.getInt("temperature"), rs.getInt("drylevel"));
+                soilStatus.setDryLevelAndTemperature(drylevelAndTemperature);
+                return soilStatus;
+            }
 
-                }, new Object[]{});
+        }, new Object[]{});
     }
 
     public IrrigationHistory getLastIrrigationHistory(DataSource dataSource) {
@@ -338,19 +339,19 @@ public class SmartGardenService {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         return jdbcTemplate.query(String.format("select id,start_time,end_time,image_filename from irrigation_history order by id desc limit %s", itemCount),
                 new RowMapper<IrrigationHistory>() {
-                    @Override
-                    public IrrigationHistory mapRow(ResultSet rs, int i) throws SQLException {
-                        IrrigationHistory history = new IrrigationHistory();
-                        history.setId(rs.getInt("id"));
-                        history.setStartTime(new Date(rs.getTimestamp("start_time").getTime()));
-                        if (rs.getTimestamp("end_time") != null) {
-                            history.setEndTime(new Date(rs.getTimestamp("end_time").getTime()));
-                        }
-                        history.setImageFilename(rs.getString("image_filename"));
-                        return history;
-                    }
+            @Override
+            public IrrigationHistory mapRow(ResultSet rs, int i) throws SQLException {
+                IrrigationHistory history = new IrrigationHistory();
+                history.setId(rs.getInt("id"));
+                history.setStartTime(new Date(rs.getTimestamp("start_time").getTime()));
+                if (rs.getTimestamp("end_time") != null) {
+                    history.setEndTime(new Date(rs.getTimestamp("end_time").getTime()));
+                }
+                history.setImageFilename(rs.getString("image_filename"));
+                return history;
+            }
 
-                }, new Object[]{});
+        }, new Object[]{});
     }
 
     public GardenStatus getGardenStatus(DataSource dataSource) throws Throwable {
@@ -358,26 +359,26 @@ public class SmartGardenService {
         gardenStatus.setConfig(this.getConfig(dataSource));
 
         PowerStatus powerStatus = new PowerStatus();
-        powerStatus.setVoltageAndCurrent(this.voltageCurrentSensor.readData());
+        powerStatus.setVoltageAndCurrent(this.voltageCurrentSensor.readOutputValue());
         powerStatus.setBatteryLevelInPercent((int) calculatePowerLevelInPercent(powerStatus.getVoltageAndCurrent().getVoltage()));
         gardenStatus.setPowerStatus(powerStatus);
 
-        gardenStatus.setIrrigationStatus(this.getIrrigationStatus(dataSource));
+        gardenStatus.setIrrigationStatus(this.getIrrigationStatus());
 
         return gardenStatus;
     }
 
-    private IrrigationStatus getIrrigationStatus(DataSource dataSource) throws Throwable {
+    private IrrigationStatus getIrrigationStatus() throws Throwable {
 
         IrrigationStatus irrigationStatus = new IrrigationStatus();
         SoilStatus soilStatus = new SoilStatus();
-        soilStatus.setDryLevelAndTemperature(this.soilHumiditySensor.readData());
+        soilStatus.setDryLevelAndTemperature(this.soilHumiditySensor.readOutputValue());
         irrigationStatus.setSoilStatus(soilStatus);
 
         irrigationStatus.setWaterValveOpen(this.waterValve.getStatus() == Valve.Status.On);
 
         WaterFlow waterFlow = new WaterFlow();
-        waterFlow.setMilliliter(this.waterFlowSensor.readData().getTotalMillilitre());
+        waterFlow.setMilliliter(this.waterFlowSensor.readOutputValue().getTotalMillilitre());
         irrigationStatus.setWaterflow(waterFlow);
 
         return irrigationStatus;
