@@ -53,7 +53,7 @@ var smartgarden = {
         $("#soil_dryLevel").text(data.value.irrigationStatus.soilStatus.dryLevelAndTemperature.dryLevel);
         $("#waterflow").text(data.value.irrigationStatus.waterflow.milliliter + 'ml');
         $("#battery_voltage").text(data.value.powerStatus.voltageAndCurrent.voltage + 'V');
-        $("#battery_current").text(data.value.powerStatus.voltageAndCurrent.currentInAmp + 'mA');
+        $("#battery_current").text(data.value.powerStatus.voltageAndCurrent.currentInMA + 'mA');
         $("#max_drylevel_allowed").text(data.value.config['soil.maxDryLevelAllowed']);
         $("#drylevel_poll_count").text(data.value.config['soil.dryLevelPollCount']);
         $("#drylevel_poll_frequency").text(data.value.config['soil.dryLevelPollFrequencyInMS']);
@@ -111,7 +111,8 @@ var smartgarden = {
                     $('#irrigation_history > tbody:last-child').append(
                             "<tr><td><a href='/smartgarden/web?action=get_image&filename=" + history.imageFilename + "' target='_blank'><img src='images/photo.png'/></a></td>" +
                             "<td>" + history.startTime + "</td>" +
-                            "<td>" + history.endTime + "</td></tr>"
+                             "<td>" + history.endTime + "</td>" +
+                            "<td>" + history.waterVolumeInML + "</td></tr>"
                             );
                 }
             } else {

@@ -17,6 +17,7 @@ public class IrrigationHistory implements Serializable{
     private Date startTime;
     private Date endTime;
     private String imageFilename;
+    private int waterVolumeInML;
 
     /**
      * @return the id
@@ -72,5 +73,19 @@ public class IrrigationHistory implements Serializable{
      */
     public void setImageFilename(String imageFilename) {
         this.imageFilename = imageFilename;
+    }
+
+    /**
+     * @return the waterVolumeInML
+     */
+    public int getWaterVolumeInML() {
+        return waterVolumeInML;
+    }
+
+    /**
+     * @param waterVolumeInML the waterVolumeInML to set
+     */
+    public void setWaterVolumeInML(int waterVolumeInML) {
+        this.waterVolumeInML = waterVolumeInML;
     }
 }
