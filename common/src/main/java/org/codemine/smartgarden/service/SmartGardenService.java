@@ -294,7 +294,8 @@ public class SmartGardenService {
             return new IrrigationHistory();
         }
         return irrigationHistoryList.get(0);
-    }
+    }    
+    
 
     public List<IrrigationHistory> getIrrigationHistoryList(DataSource dataSource, int itemCount) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
