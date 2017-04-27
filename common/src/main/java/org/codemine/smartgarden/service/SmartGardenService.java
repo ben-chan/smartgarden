@@ -288,14 +288,31 @@ public class SmartGardenService {
         }, new Object[]{});
     }
 
+    public List<PowerStatus> getPowerStatusHistory(DataSource dataSource, int itemCount) {
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        return jdbcTemplate.query(String.format("select id,voltage,current_ma,datetime from power_status order by id desc limit %s", itemCount),
+                new RowMapper<PowerStatus>() {
+            @Override
+            public PowerStatus mapRow(ResultSet rs, int i) throws SQLException {
+                PowerStatus powerStatus = new PowerStatus();
+                powerStatus.setId(rs.getInt("id"));
+                powerStatus.setDateTIme(new Timestamp(rs.getTimestamp("datetime").getTime()));
+                INA219VoltageCurrentSensor.OutputValue voltageAndCurrent
+                        = new INA219VoltageCurrentSensor.OutputValue(rs.getDouble("voltage"), rs.getDouble("current_ma"));
+                powerStatus.setVoltageAndCurrent(voltageAndCurrent);
+                return powerStatus;
+            }
+
+        }, new Object[]{});
+    }
+
     public IrrigationHistory getLastIrrigationHistory(DataSource dataSource) {
         List<IrrigationHistory> irrigationHistoryList = getIrrigationHistoryList(dataSource, 1);
         if (irrigationHistoryList.isEmpty()) {
             return new IrrigationHistory();
         }
         return irrigationHistoryList.get(0);
-    }    
-    
+    }
 
     public List<IrrigationHistory> getIrrigationHistoryList(DataSource dataSource, int itemCount) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
@@ -313,7 +330,6 @@ public class SmartGardenService {
                 history.setWaterVolumeInML(rs.getInt("water_volume_ml"));
                 return history;
             }
-            
 
         }, new Object[]{});
     }

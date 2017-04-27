@@ -150,16 +150,11 @@ public class SmartGardenServlet extends HttpServlet {
                 if (action.equalsIgnoreCase("get_soil_status_history")) {
                     logger.log(Level.INFO, "processRequest:get_soil_status_history");
                     List<SoilStatus> historyList = smartGardenService.getSoilStatusHistory(this.getDataSource(), 10);
-//                    historyList.stream().forEach(new Consumer<SoilStatus>(){
-//                        @Override
-//                        public void accept(SoilStatus t) {
-//                            t.
-//                        }
-//                        
-//                    });
                     requestResult.setValue(historyList);
                     requestResult.setSuccess(true);
                 }
+                
+                
 
             } else {
                 request.getRequestDispatcher("/index.html").forward(request, response);
