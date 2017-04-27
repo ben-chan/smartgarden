@@ -5,6 +5,7 @@ var smartgarden = {
         this.initIrrigationToggle();
         this.getSoilStatusHistory();
         this.getIrrigationHistory();
+        this.getPowerStatusHistory();
     },
     initIrrigationToggle: function () {
         var self = this;
@@ -29,6 +30,7 @@ var smartgarden = {
             });
         });
     },
+
     getGardenStatus: function () {
         var self = this;
         $.get("/smartgarden/web?action=get_garden_status", function (data) {
@@ -111,10 +113,42 @@ var smartgarden = {
                     $('#irrigation_history > tbody:last-child').append(
                             "<tr><td><a href='/smartgarden/web?action=get_image&filename=" + history.imageFilename + "' target='_blank'><img src='images/photo.png'/></a></td>" +
                             "<td>" + history.startTime + "</td>" +
-                             "<td>" + history.endTime + "</td>" +
+                            "<td>" + history.endTime + "</td>" +
                             "<td>" + history.waterVolumeInML + "</td></tr>"
                             );
                 }
+            } else {
+                $("#irrigation_message").text(data.errorMessage);
+            }
+
+        });
+    },
+    getPowerStatusHistory: function () {
+        $.get("/smartgarden/web?action=get_power_status_history", function (data) {
+            if (data.success) {
+                var chartDataList = data.value;
+                for (var i = 0; i < chartDataList.length; ++i) {
+                    var chartData = chartDataList[i];
+                    chartData.voltage = chartData.voltageAndCurrent.voltage;                   
+                }
+                Morris.Line({
+                    // ID of the element in which to draw the chart.
+                    element: 'solar_power_trend',
+                    // Chart data records -- each entry in this array corresponds to a point on
+                    // the chart.
+                    data: chartDataList,
+                    // The name of the data record attribute that contains x-visitss.
+                    xkey: 'datetime',
+                    // A list of names of data record attributes that contain y-visitss.
+                    ykeys: ['voltage'],
+                    // Labels for the ykeys -- will be displayed when you hover over the
+                    // chart.
+                    labels: ['Voltage'],
+                    // Disables line smoothing
+                    smooth: true,
+                    resize: true
+                });
+
             } else {
                 $("#irrigation_message").text(data.errorMessage);
             }

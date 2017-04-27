@@ -296,7 +296,7 @@ public class SmartGardenService {
             public PowerStatus mapRow(ResultSet rs, int i) throws SQLException {
                 PowerStatus powerStatus = new PowerStatus();
                 powerStatus.setId(rs.getInt("id"));
-                powerStatus.setDateTIme(new Timestamp(rs.getTimestamp("datetime").getTime()));
+                powerStatus.setDatetime(new Timestamp(rs.getTimestamp("datetime").getTime()));
                 INA219VoltageCurrentSensor.OutputValue voltageAndCurrent
                         = new INA219VoltageCurrentSensor.OutputValue(rs.getDouble("voltage"), rs.getDouble("current_ma"));
                 powerStatus.setVoltageAndCurrent(voltageAndCurrent);

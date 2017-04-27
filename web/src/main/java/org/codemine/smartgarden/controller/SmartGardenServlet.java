@@ -30,10 +30,9 @@ import java.io.File;
 import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.function.Consumer;
 import javax.imageio.ImageIO;
 import org.codemine.smartgarden.model.GardenStatus;
-import org.codemine.smartgarden.model.IrrigationStatus;
+import org.codemine.smartgarden.model.PowerStatus;
 import org.codemine.smartgarden.model.SoilStatus;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
@@ -126,7 +125,7 @@ public class SmartGardenServlet extends HttpServlet {
                     requestResult.setValue(gardenStatus);
                     requestResult.setSuccess(true);
                 }
-              
+
                 if (action.equalsIgnoreCase("stop_irrigation")) {
                     logger.log(Level.INFO, "processRequest:stop_irrigation");
 
@@ -153,8 +152,13 @@ public class SmartGardenServlet extends HttpServlet {
                     requestResult.setValue(historyList);
                     requestResult.setSuccess(true);
                 }
-                
-                
+
+                if (action.equalsIgnoreCase("get_power_status_history")) {
+                    logger.log(Level.INFO, "processRequest:get_power_status_history");
+                    List<PowerStatus> historyList = smartGardenService.getPowerStatusHistory(this.getDataSource(), 10);
+                    requestResult.setValue(historyList);
+                    requestResult.setSuccess(true);
+                }
 
             } else {
                 request.getRequestDispatcher("/index.html").forward(request, response);

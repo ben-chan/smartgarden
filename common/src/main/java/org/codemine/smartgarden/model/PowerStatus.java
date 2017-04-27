@@ -14,13 +14,13 @@ import com.codemine.iot.device.sensor.INA219VoltageCurrentSensor;
  */
 public class PowerStatus {
     private int id;
-    private Date dateTIme;
+    private Date datetime;
     private INA219VoltageCurrentSensor.OutputValue voltageAndCurrent;
     private int batteryLevelInPercent;
 
-    public PowerStatus(int id, Date dateTIme, INA219VoltageCurrentSensor.OutputValue voltageAndCurrent) {
+    public PowerStatus(int id, Date datetime, INA219VoltageCurrentSensor.OutputValue voltageAndCurrent) {
         this.id = id;
-        this.dateTIme = dateTIme;
+        this.datetime = datetime;
         this.voltageAndCurrent = voltageAndCurrent;
     }
 
@@ -36,13 +36,6 @@ public class PowerStatus {
     }
 
     /**
-     * @return the dateTIme
-     */
-    public Date getDateTIme() {
-        return dateTIme;
-    }
-
-    /**
      * @return the voltageAndCurrent
      */
     public INA219VoltageCurrentSensor.OutputValue getVoltageAndCurrent() {
@@ -55,14 +48,6 @@ public class PowerStatus {
     public void setId(int id) {
         this.id = id;
     }
-
-    /**
-     * @param dateTIme the dateTIme to set
-     */
-    public void setDateTIme(Date dateTIme) {
-        this.dateTIme = dateTIme;
-    }
-
     /**
      * @param voltageAndCurrent the voltageAndCurrent to set
      */
@@ -82,6 +67,20 @@ public class PowerStatus {
      */
     public void setBatteryLevelInPercent(int batteryLevelInPercent) {
         this.batteryLevelInPercent = batteryLevelInPercent;
+    }
+
+    /**
+     * @return the datetime
+     */
+    public Date getDatetime() {
+        return datetime;
+    }
+
+    /**
+     * @param datetime the datetime to set
+     */
+    public void setDatetime(Date datetime) {
+        this.datetime = datetime;
     }
 
    
