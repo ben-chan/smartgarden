@@ -100,11 +100,13 @@ public class SmartGardenService {
         } else {
             this.camera = new USBCamera(new Dimension(Integer.parseInt(config.get("image.width")), Integer.parseInt(config.get("image.height"))));
             this.soilHumiditySensor = new ModbusSoilHumiditySensor(config.get("soil.sensorSerialPortName"));
+            this.soilHumiditySensor = new MockPollingSensor<>(new ModbusSoilHumiditySensor.OutputValue(30, 2600));
             GpioController gpioController = GpioFactory.getInstance();
             this.waterValve = new WaterValve(gpioController, RaspiPin.GPIO_00);
             this.waterFlowSensor = new HallEffectWaterFlowSensor(gpioController, RaspiPin.GPIO_07);
             I2CBus i2cBus = I2CFactory.getInstance(I2CBus.BUS_1);
             this.voltageCurrentSensor = new INA219VoltageCurrentSensor(i2cBus, 0x40);
+      //      this.voltageCurrentSensor = new MockPollingSensor<>(new INA219VoltageCurrentSensor.OutputValue(12.0, 3.0));
         }
         this.healthCheckService = new HealthCheckService(this.waterValve, this.voltageCurrentSensor);
     }

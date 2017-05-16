@@ -81,16 +81,9 @@
         
         <dependency>
             <groupId>com.github.sarxos</groupId>
-            <artifactId>webcam-capture</artifactId>
-            <version>0.3.10</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>com.github.sarxos</groupId>
             <artifactId>v4l4j</artifactId>
             <version>0.9.1-r507</version>
         </dependency>
-        
         <dependency>
             <groupId>com.github.sarxos</groupId>
             <artifactId>webcam-capture-driver-v4l4j</artifactId>
