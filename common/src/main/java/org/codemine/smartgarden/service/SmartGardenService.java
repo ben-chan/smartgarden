@@ -275,7 +275,7 @@ public class SmartGardenService {
 
     public List<SoilStatus> getSoilStatusHistory(DataSource dataSource, int itemCount) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        return jdbcTemplate.query(String.format("select id,drylevel,temperature_celsius,datetime from soil_status order by id desc limit %s", itemCount),
+        return jdbcTemplate.query(String.format("select id,drylevel,temperature_celsius,datetime from soil_status GROUP BY DATE(soil_status.datetime) order by id desc limit %s", itemCount),
                 new RowMapper<SoilStatus>() {
             @Override
             public SoilStatus mapRow(ResultSet rs, int i) throws SQLException {
