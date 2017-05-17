@@ -146,7 +146,9 @@ var smartgarden = {
                     labels: ['Voltage'],
                     // Disables line smoothing
                     smooth: true,
-                    resize: true
+                    resize: true,
+                    ymax:15,
+                    ymin:10
                 });
 
             } else {
@@ -159,10 +161,22 @@ var smartgarden = {
         $.get("/smartgarden/web?action=get_soil_status_history", function (data) {
             if (data.success) {
                 var chartDataList = data.value;
+                var minDryLevel=0;
+                var maxDryLevel=0
                 for (var i = 0; i < chartDataList.length; ++i) {
                     var chartData = chartDataList[i];
                     chartData.dryLevel = chartData.dryLevelAndTemperature.dryLevel;
                     chartData.temperature = chartData.dryLevelAndTemperature.temperatureInCelsius;
+                    if (i==0){
+                        minDryLevel=maxDryLevel=chartData.dryLevel;
+                    }else{
+                        if (chartData.dryLevel < minDryLevel){
+                            minDryLevel=chartData.dryLevel;
+                        }
+                        if (chartData.dryLevel > maxDryLevel){
+                            maxDryLevel=chardData.dryLevel;
+                        }
+                    }
 
                 }
                 Morris.Line({
@@ -180,7 +194,9 @@ var smartgarden = {
                     labels: ['Dry Level'],
                     // Disables line smoothing
                     smooth: true,
-                    resize: true
+                    resize: true,
+                    ymax:maxDryLevel,
+                    ymin:minDryLevel
                 });
 
             } else {
