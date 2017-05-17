@@ -174,7 +174,7 @@ var smartgarden = {
                             minDryLevel=chartData.dryLevel;
                         }
                         if (chartData.dryLevel > maxDryLevel){
-                            maxDryLevel=chardData.dryLevel;
+                            maxDryLevel=chartData.dryLevel;
                         }
                     }
 
