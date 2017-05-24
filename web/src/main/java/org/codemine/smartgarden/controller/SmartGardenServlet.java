@@ -160,6 +160,13 @@ public class SmartGardenServlet extends HttpServlet {
                     requestResult.setSuccess(true);
                 }
 
+                if (action.equalsIgnoreCase("take_photo")) {
+                    logger.log(Level.INFO, "processRequest:take_photo");
+                    String photoFilename = smartGardenService.takePhoto();
+                    requestResult.setValue(photoFilename);
+                    requestResult.setSuccess(true);
+                }
+
             } else {
                 request.getRequestDispatcher("/index.html").forward(request, response);
             }

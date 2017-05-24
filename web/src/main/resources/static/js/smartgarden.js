@@ -6,7 +6,18 @@ var smartgarden = {
         this.getSoilStatusHistory();
         this.getIrrigationHistory();
         this.getPowerStatusHistory();
+        this.initTakePhoto();
     },
+    initTakePhoto: function () {
+        $('#take_photo').click(function(){
+           $.get("/smartgarden/web?action=take_photo", function (data) {
+               var imageFilename=data.value;
+               $("#photo_url").attr('src','/smartgarden/web?action=get_image&filename='+imageFilename);
+               $("#photo").modal('show');
+           });
+        });
+    }
+    ,
     initIrrigationToggle: function () {
         var self = this;
         $.get("/smartgarden/web?action=get_garden_status", function (data) {
@@ -30,7 +41,6 @@ var smartgarden = {
             });
         });
     },
-
     getGardenStatus: function () {
         var self = this;
         $.get("/smartgarden/web?action=get_garden_status", function (data) {
@@ -129,7 +139,7 @@ var smartgarden = {
                 var chartDataList = data.value;
                 for (var i = 0; i < chartDataList.length; ++i) {
                     var chartData = chartDataList[i];
-                    chartData.voltage = chartData.voltageAndCurrent.voltage;                   
+                    chartData.voltage = chartData.voltageAndCurrent.voltage;
                 }
                 Morris.Line({
                     // ID of the element in which to draw the chart.
@@ -147,8 +157,8 @@ var smartgarden = {
                     // Disables line smoothing
                     smooth: true,
                     resize: true,
-                    ymax:15,
-                    ymin:10
+                    ymax: 15,
+                    ymin: 10
                 });
 
             } else {
@@ -161,20 +171,20 @@ var smartgarden = {
         $.get("/smartgarden/web?action=get_soil_status_history", function (data) {
             if (data.success) {
                 var chartDataList = data.value;
-                var minDryLevel=0;
-                var maxDryLevel=0
+                var minDryLevel = 0;
+                var maxDryLevel = 0
                 for (var i = 0; i < chartDataList.length; ++i) {
                     var chartData = chartDataList[i];
                     chartData.dryLevel = chartData.dryLevelAndTemperature.dryLevel;
                     chartData.temperature = chartData.dryLevelAndTemperature.temperatureInCelsius;
-                    if (i==0){
-                        minDryLevel=maxDryLevel=chartData.dryLevel;
-                    }else{
-                        if (chartData.dryLevel < minDryLevel){
-                            minDryLevel=chartData.dryLevel;
+                    if (i == 0) {
+                        minDryLevel = maxDryLevel = chartData.dryLevel;
+                    } else {
+                        if (chartData.dryLevel < minDryLevel) {
+                            minDryLevel = chartData.dryLevel;
                         }
-                        if (chartData.dryLevel > maxDryLevel){
-                            maxDryLevel=chartData.dryLevel;
+                        if (chartData.dryLevel > maxDryLevel) {
+                            maxDryLevel = chartData.dryLevel;
                         }
                     }
 
@@ -195,8 +205,8 @@ var smartgarden = {
                     // Disables line smoothing
                     smooth: true,
                     resize: true,
-                    ymax:maxDryLevel,
-                    ymin:minDryLevel
+                    ymax: maxDryLevel,
+                    ymin: minDryLevel
                 });
 
             } else {

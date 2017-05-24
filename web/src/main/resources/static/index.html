@@ -44,10 +44,36 @@
         <script src="js/plugins/morris/morris-data.js"></script>-->
 
         <script src="js/smartgarden.js"></script>
+        <style>
+            .modal-dialog {
+                width: 1090px;
+                margin: 30px auto;
+            }
+        </style>
     </head>
 
     <body>
 
+        <!-- Modal -->
+        <div id="photo" class="modal fade" role="dialog">
+            <div class="modal-dialog">
+
+                <!-- Modal content-->
+                <div class="modal-content">
+                    <!--<div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Modal Header</h4>
+                    </div>-->
+                    <div class="modal-body">
+                        <img id="photo_url" src="_#"/>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
         <div id="wrapper">
 
 
@@ -100,7 +126,9 @@
                                                 </div>
 
                                             </td></tr>
-                                    </table>
+                                    </table>                                   
+
+                                    <button type="button" class="btn btn-info" id="take_photo">Take Photo</button>
                                 </div>
                             </div>
 
@@ -115,6 +143,7 @@
                                         <tr><td>Dry Level Poll Count</td><td><span id="drylevel_poll_count"></span></td></tr>
                                         <tr><td>Dry Level Poll Frequency</td><td><span id="drylevel_poll_frequency"></span></td></tr>
                                     </table>
+
                                 </div>
                             </div>
 

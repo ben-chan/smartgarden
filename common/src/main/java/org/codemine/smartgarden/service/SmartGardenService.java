@@ -100,13 +100,13 @@ public class SmartGardenService {
         } else {
             this.camera = new USBCamera(new Dimension(Integer.parseInt(config.get("image.width")), Integer.parseInt(config.get("image.height"))));
             this.soilHumiditySensor = new ModbusSoilHumiditySensor(config.get("soil.sensorSerialPortName"));
-   //         this.soilHumiditySensor = new MockPollingSensor<>(new ModbusSoilHumiditySensor.OutputValue(30, 2600));
+            //         this.soilHumiditySensor = new MockPollingSensor<>(new ModbusSoilHumiditySensor.OutputValue(30, 2600));
             GpioController gpioController = GpioFactory.getInstance();
             this.waterValve = new WaterValve(gpioController, RaspiPin.GPIO_00);
             this.waterFlowSensor = new HallEffectWaterFlowSensor(gpioController, RaspiPin.GPIO_02);
             I2CBus i2cBus = I2CFactory.getInstance(I2CBus.BUS_1);
             this.voltageCurrentSensor = new INA219VoltageCurrentSensor(i2cBus, 0x40);
-      //      this.voltageCurrentSensor = new MockPollingSensor<>(new INA219VoltageCurrentSensor.OutputValue(12.0, 3.0));
+            //      this.voltageCurrentSensor = new MockPollingSensor<>(new INA219VoltageCurrentSensor.OutputValue(12.0, 3.0));
         }
         this.healthCheckService = new HealthCheckService(this.waterValve, this.voltageCurrentSensor);
     }
@@ -244,15 +244,9 @@ public class SmartGardenService {
         return -1;
     }
 
-    public boolean stopIrrigation(DataSource dataSource, Integer historyId) {
-        if (!inProgress.get()) {
-            return true;
-        }
-        this.waterValve.off();
-        inProgress.set(false);
+    public String takePhoto() {
         String imageFilename = null;
-        try {
-            this.waterFlowSensor.stopListenEvent();
+        try {            
             imageFilename = UUID.randomUUID().toString() + ".jpg";
             BufferedImage photoImage = this.camera.takePhoto();
             File imageFile = new File(mediaFileDirectory, imageFilename);
@@ -263,14 +257,25 @@ public class SmartGardenService {
         } catch (Throwable t) {
             logger.error("take photo", t);
         }
+        return imageFilename;
+    }
+
+    public boolean stopIrrigation(DataSource dataSource, Integer historyId) {
+        if (!inProgress.get()) {
+            return true;
+        }
+        this.waterValve.off();
+        inProgress.set(false);
         try {
+            this.waterFlowSensor.stopListenEvent();
+            String imageFilename = this.takePhoto();
             JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
             jdbcTemplate.update("update irrigation_history set end_time=now(),image_filename=?,water_volume_ml=? where id=? and end_time is null",
                     new Object[]{imageFilename, this.waterFlowSensor.readOutputValue().getTotalMillilitre(), historyId});
         } catch (Throwable t) {
             logger.error("update database", t);
         }
-        
+
         return true;
     }
 
