@@ -9,12 +9,16 @@ var smartgarden = {
         this.initTakePhoto();
     },
     initTakePhoto: function () {
-        $('#take_photo').click(function(){
-           $.get("/smartgarden/web?action=take_photo", function (data) {
-               var imageFilename=data.value;
-               $("#photo_url").attr('src','/smartgarden/web?action=get_image&filename='+imageFilename);
-               $("#photo").modal('show');
-           });
+        $('#take_photo').click(function () {
+            $('#take_photo').text("Please wait");
+            $('#take_photo').attr('disabled', true);            
+            $.get("/smartgarden/web?action=take_photo", function (data) {
+                var imageFilename = data.value;
+                $("#photo_url").attr('src', '/smartgarden/web?action=get_image&filename=' + imageFilename);
+                $("#photo").modal('show');
+                $('#take_photo').attr('disabled', false);
+                $('#take_photo').text("Take Photo");
+            });
         });
     }
     ,
