@@ -100,13 +100,11 @@ public class SmartGardenService {
         } else {
             this.camera = new USBCamera(new Dimension(Integer.parseInt(config.get("image.width")), Integer.parseInt(config.get("image.height"))));
             this.soilHumiditySensor = new ModbusSoilHumiditySensor(config.get("soil.sensorSerialPortName"));
-            //         this.soilHumiditySensor = new MockPollingSensor<>(new ModbusSoilHumiditySensor.OutputValue(30, 2600));
             GpioController gpioController = GpioFactory.getInstance();
             this.waterValve = new WaterValve(gpioController, RaspiPin.GPIO_00);
-            this.waterFlowSensor = new HallEffectWaterFlowSensor(gpioController, RaspiPin.GPIO_02);
+            this.waterFlowSensor = new HallEffectWaterFlowSensor(gpioController, RaspiPin.GPIO_25);
             I2CBus i2cBus = I2CFactory.getInstance(I2CBus.BUS_1);
             this.voltageCurrentSensor = new INA219VoltageCurrentSensor(i2cBus, 0x40);
-            //      this.voltageCurrentSensor = new MockPollingSensor<>(new INA219VoltageCurrentSensor.OutputValue(12.0, 3.0));
         }
         this.healthCheckService = new HealthCheckService(this.waterValve, this.voltageCurrentSensor);
     }
@@ -139,6 +137,9 @@ public class SmartGardenService {
 
     public void startIrrigationWhenLowHumidity(final DataSource dataSource) {
         try {
+
+            this.waterFlowSensor.startListenEvent();
+
             int dryLevelSum = 0;
             int temperatureSum = 0;
             for (int i = 0; i < soilDryLevelPollCount; ++i) {
@@ -159,6 +160,9 @@ public class SmartGardenService {
             JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
             String sql = "INSERT INTO soil_status (datetime,drylevel,temperature_celsius) values(now(),?,?)";
             jdbcTemplate.update(sql, new Object[]{averageDryLevel, averageTemperature});
+            logger.info(String.format("Waterflow=%sML", this.waterFlowSensor.readOutputValue().getTotalMillilitre()));
+            this.waterFlowSensor.stopListenEvent();
+
         } catch (Throwable t) {
             logger.fatal("startIrrigationWhenLowHumdity", t);
         } finally {
@@ -246,7 +250,7 @@ public class SmartGardenService {
 
     public String takePhoto() {
         String imageFilename = null;
-        try {            
+        try {
             imageFilename = UUID.randomUUID().toString() + ".jpg";
             BufferedImage photoImage = this.camera.takePhoto();
             File imageFile = new File(mediaFileDirectory, imageFilename);
@@ -283,35 +287,35 @@ public class SmartGardenService {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         return jdbcTemplate.query(String.format("select id,drylevel,temperature_celsius,datetime from soil_status order by id desc limit %s", itemCount),
                 new RowMapper<SoilStatus>() {
-            @Override
-            public SoilStatus mapRow(ResultSet rs, int i) throws SQLException {
-                SoilStatus soilStatus = new SoilStatus();
-                soilStatus.setId(rs.getLong("id"));
-                soilStatus.setDatetime(new Timestamp(rs.getTimestamp("datetime").getTime()));
-                ModbusSoilHumiditySensor.OutputValue drylevelAndTemperature = new ModbusSoilHumiditySensor.OutputValue(rs.getInt("temperature_celsius"), rs.getInt("drylevel"));
-                soilStatus.setDryLevelAndTemperature(drylevelAndTemperature);
-                return soilStatus;
-            }
+                    @Override
+                    public SoilStatus mapRow(ResultSet rs, int i) throws SQLException {
+                        SoilStatus soilStatus = new SoilStatus();
+                        soilStatus.setId(rs.getLong("id"));
+                        soilStatus.setDatetime(new Timestamp(rs.getTimestamp("datetime").getTime()));
+                        ModbusSoilHumiditySensor.OutputValue drylevelAndTemperature = new ModbusSoilHumiditySensor.OutputValue(rs.getInt("temperature_celsius"), rs.getInt("drylevel"));
+                        soilStatus.setDryLevelAndTemperature(drylevelAndTemperature);
+                        return soilStatus;
+                    }
 
-        }, new Object[]{});
+                }, new Object[]{});
     }
 
     public List<PowerStatus> getPowerStatusHistory(DataSource dataSource, int itemCount) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         return jdbcTemplate.query(String.format("select id,voltage,current_ma,datetime from power_status order by id desc limit %s", itemCount),
                 new RowMapper<PowerStatus>() {
-            @Override
-            public PowerStatus mapRow(ResultSet rs, int i) throws SQLException {
-                PowerStatus powerStatus = new PowerStatus();
-                powerStatus.setId(rs.getInt("id"));
-                powerStatus.setDatetime(new Timestamp(rs.getTimestamp("datetime").getTime()));
-                INA219VoltageCurrentSensor.OutputValue voltageAndCurrent
+                    @Override
+                    public PowerStatus mapRow(ResultSet rs, int i) throws SQLException {
+                        PowerStatus powerStatus = new PowerStatus();
+                        powerStatus.setId(rs.getInt("id"));
+                        powerStatus.setDatetime(new Timestamp(rs.getTimestamp("datetime").getTime()));
+                        INA219VoltageCurrentSensor.OutputValue voltageAndCurrent
                         = new INA219VoltageCurrentSensor.OutputValue(rs.getDouble("voltage"), rs.getDouble("current_ma"));
-                powerStatus.setVoltageAndCurrent(voltageAndCurrent);
-                return powerStatus;
-            }
+                        powerStatus.setVoltageAndCurrent(voltageAndCurrent);
+                        return powerStatus;
+                    }
 
-        }, new Object[]{});
+                }, new Object[]{});
     }
 
     public IrrigationHistory getLastIrrigationHistory(DataSource dataSource) {
@@ -326,20 +330,20 @@ public class SmartGardenService {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         return jdbcTemplate.query(String.format("select id,start_time,end_time,image_filename,water_volume_ml from irrigation_history order by id desc limit %s", itemCount),
                 new RowMapper<IrrigationHistory>() {
-            @Override
-            public IrrigationHistory mapRow(ResultSet rs, int i) throws SQLException {
-                IrrigationHistory history = new IrrigationHistory();
-                history.setId(rs.getInt("id"));
-                history.setStartTime(new Date(rs.getTimestamp("start_time").getTime()));
-                if (rs.getTimestamp("end_time") != null) {
-                    history.setEndTime(new Date(rs.getTimestamp("end_time").getTime()));
-                }
-                history.setImageFilename(rs.getString("image_filename"));
-                history.setWaterVolumeInML(rs.getInt("water_volume_ml"));
-                return history;
-            }
+                    @Override
+                    public IrrigationHistory mapRow(ResultSet rs, int i) throws SQLException {
+                        IrrigationHistory history = new IrrigationHistory();
+                        history.setId(rs.getInt("id"));
+                        history.setStartTime(new Date(rs.getTimestamp("start_time").getTime()));
+                        if (rs.getTimestamp("end_time") != null) {
+                            history.setEndTime(new Date(rs.getTimestamp("end_time").getTime()));
+                        }
+                        history.setImageFilename(rs.getString("image_filename"));
+                        history.setWaterVolumeInML(rs.getInt("water_volume_ml"));
+                        return history;
+                    }
 
-        }, new Object[]{});
+                }, new Object[]{});
     }
 
     public GardenStatus getGardenStatus(DataSource dataSource) throws Throwable {
