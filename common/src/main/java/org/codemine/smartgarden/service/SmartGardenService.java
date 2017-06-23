@@ -72,7 +72,7 @@ public class SmartGardenService {
     private Camera camera = null;
 
     private Sensor<ModbusSoilHumiditySensor.OutputValue> soilHumiditySensor = null;
-    private EventDrivenSensor<HallEffectWaterFlowSensor.OutputValue> waterFlowSensor = null;
+    private HallEffectWaterFlowSensor waterFlowSensor = null;
     private Sensor<INA219VoltageCurrentSensor.OutputValue> voltageCurrentSensor = null;
 
     private Valve waterValve = null;
@@ -95,7 +95,7 @@ public class SmartGardenService {
             this.camera = new MockCamera();
             this.soilHumiditySensor = new MockPollingSensor<>(new ModbusSoilHumiditySensor.OutputValue(30, 2600));
             this.waterValve = new MockValve();
-            this.waterFlowSensor = new MockEventDrivenSensor<>(new HallEffectWaterFlowSensor.OutputValue(BigDecimal.valueOf(299)));
+//            this.waterFlowSensor = new MockEventDrivenSensor<>(new HallEffectWaterFlowSensor.OutputValue(BigDecimal.valueOf(299)));
             this.voltageCurrentSensor = new MockPollingSensor<>(new INA219VoltageCurrentSensor.OutputValue(12.0, 3.0));
         } else {
             this.camera = new USBCamera(new Dimension(Integer.parseInt(config.get("image.width")), Integer.parseInt(config.get("image.height"))));
@@ -103,7 +103,8 @@ public class SmartGardenService {
             GpioController gpioController = GpioFactory.getInstance();
             this.waterValve = new WaterValve(gpioController, RaspiPin.GPIO_00);
             this.waterFlowSensor = new HallEffectWaterFlowSensor(gpioController, RaspiPin.GPIO_25);
-            I2CBus i2cBus = I2CFactory.getInstance(I2CBus.BUS_1);
+           this.waterFlowSensor.startListenEvent(); 
+		I2CBus i2cBus = I2CFactory.getInstance(I2CBus.BUS_1);
             this.voltageCurrentSensor = new INA219VoltageCurrentSensor(i2cBus, 0x40);
         }
         this.healthCheckService = new HealthCheckService(this.waterValve, this.voltageCurrentSensor);
@@ -177,7 +178,7 @@ public class SmartGardenService {
                 return -1;
             }
             this.inProgress.set(true);
-            this.waterFlowSensor.startListenEvent();
+            this.waterFlowSensor.reset();
             this.waterValve.on();
             JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
             KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -271,7 +272,6 @@ public class SmartGardenService {
         this.waterValve.off();
         inProgress.set(false);
         try {
-            this.waterFlowSensor.stopListenEvent();
             String imageFilename = this.takePhoto();
             JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
             jdbcTemplate.update("update irrigation_history set end_time=now(),image_filename=?,water_volume_ml=? where id=? and end_time is null",
