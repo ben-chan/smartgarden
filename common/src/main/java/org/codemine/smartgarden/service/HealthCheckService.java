@@ -11,6 +11,8 @@ import com.codemine.iot.device.sensor.INA219VoltageCurrentSensor;
 import com.codemine.iot.device.sensor.Sensor;
 import com.codemine.iot.device.valve.Valve;
 import com.codemine.iot.device.valve.WaterValve;
+
+import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Calendar;
@@ -52,7 +54,9 @@ public class HealthCheckService {
 	this.waterFlowSensor.stopListenEvent();
 	JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
 	String sql = "INSERT INTO waterflow_status (datetime,volume_ml) values(now(),?)";
-	jdbcTemplate.update(sql, new Object[] { this.waterFlowSensor.readOutputValue().getTotalMillilitre().intValue() });
+	BigDecimal waterVolumeInML= this.waterFlowSensor.readOutputValue().getTotalMillilitre();
+	jdbcTemplate.update(sql, new Object[] {waterVolumeInML.intValue() });	
+        logger.info(String.format("Waterflow=%sML", waterVolumeInML));
     }
 
     public void checkSolarPowerLevel(DataSource dataSource) {
@@ -61,9 +65,12 @@ public class HealthCheckService {
 		    .readOutputValue();
 	    JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
 	    String sql = "INSERT INTO power_status (datetime,voltage,current_ma) values(now(),?,?)";
+	    double voltage=voltageAndCurrent.getVoltage();
+	    double currentInMA=voltageAndCurrent.getCurrentInMA();
 	    jdbcTemplate.update(sql,
-		    new Object[] { voltageAndCurrent.getVoltage(),
-			    voltageAndCurrent.getCurrentInMA() });
+		    new Object[] { voltage,
+			    currentInMA });
+	    logger.info(String.format("voltage=%s,currentInMA=%s", voltage,currentInMA));    
 	} catch (Throwable t) {
 	    logger.error("checkSolarPowerLevel", t);
 	}

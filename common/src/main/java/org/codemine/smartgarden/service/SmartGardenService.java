@@ -144,7 +144,6 @@ public class SmartGardenService {
             int dryLevelSum = 0;
             int temperatureSum = 0;
             for (int i = 0; i < soilDryLevelPollCount; ++i) {
-
                 ModbusSoilHumiditySensor.OutputValue humidtyAndTemperature = this.soilHumiditySensor.readOutputValue();
                 temperatureSum += humidtyAndTemperature.getTemperatureInCelsius();
                 dryLevelSum += humidtyAndTemperature.getDryLevel();
@@ -161,7 +160,6 @@ public class SmartGardenService {
             JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
             String sql = "INSERT INTO soil_status (datetime,drylevel,temperature_celsius) values(now(),?,?)";
             jdbcTemplate.update(sql, new Object[]{averageDryLevel, averageTemperature});
-            logger.info(String.format("Waterflow=%sML", this.waterFlowSensor.readOutputValue().getTotalMillilitre()));
         } catch (Throwable t) {
             logger.fatal("startIrrigationWhenLowHumdity", t);
         } finally {
