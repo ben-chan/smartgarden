@@ -48,6 +48,7 @@ import java.io.FileNotFoundException;
 import java.util.UUID;
 import javax.imageio.ImageIO;
 import org.codemine.smartgarden.model.*;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
@@ -72,7 +73,7 @@ public class SmartGardenService {
     private Camera camera = null;
 
     private Sensor<ModbusSoilHumiditySensor.OutputValue> soilHumiditySensor = null;
-    private HallEffectWaterFlowSensor waterFlowSensor = null;
+    private EventDrivenSensor<HallEffectWaterFlowSensor.OutputValue> waterFlowSensor = null;
     private Sensor<INA219VoltageCurrentSensor.OutputValue> voltageCurrentSensor = null;
 
     private Valve waterValve = null;
@@ -90,24 +91,24 @@ public class SmartGardenService {
         this.notificationService = new NotificationService(config.get("notification.email"), config.get("notification.email.password"));
         this.mediaFileDirectory = config.get("monitor.mediaFilePath");
         boolean testing = Boolean.parseBoolean(config.get("general.testing"));
-
+        GpioController gpioController = GpioFactory.getInstance();
         if (testing) {
             this.camera = new MockCamera();
             this.soilHumiditySensor = new MockPollingSensor<>(new ModbusSoilHumiditySensor.OutputValue(30, 2600));
             this.waterValve = new MockValve();
-//            this.waterFlowSensor = new MockEventDrivenSensor<>(new HallEffectWaterFlowSensor.OutputValue(BigDecimal.valueOf(299)));
+            this.waterFlowSensor = new HallEffectWaterFlowSensor(gpioController, RaspiPin.GPIO_25);
             this.voltageCurrentSensor = new MockPollingSensor<>(new INA219VoltageCurrentSensor.OutputValue(12.0, 3.0));
         } else {
             this.camera = new USBCamera(new Dimension(Integer.parseInt(config.get("image.width")), Integer.parseInt(config.get("image.height"))));
             this.soilHumiditySensor = new ModbusSoilHumiditySensor(config.get("soil.sensorSerialPortName"));
-            GpioController gpioController = GpioFactory.getInstance();
+
             this.waterValve = new WaterValve(gpioController, RaspiPin.GPIO_00);
             this.waterFlowSensor = new HallEffectWaterFlowSensor(gpioController, RaspiPin.GPIO_25);
-           this.waterFlowSensor.startListenEvent(); 
 		I2CBus i2cBus = I2CFactory.getInstance(I2CBus.BUS_1);
             this.voltageCurrentSensor = new INA219VoltageCurrentSensor(i2cBus, 0x40);
         }
-        this.healthCheckService = new HealthCheckService(this.waterValve, this.voltageCurrentSensor);
+        this.healthCheckService = new HealthCheckService(this.waterValve, this.voltageCurrentSensor,this.waterFlowSensor);
+        this.waterFlowSensor.startListenEvent();
     }
 
     public Map<String, String> getConfig(DataSource dataSource) {
@@ -124,11 +125,12 @@ public class SmartGardenService {
         return new File(config.get("monitor.mediaFilePath"), filename);
     }
 
-    public void healthCheck(DataSource dataSource) {
+    public void healthCheck(DataSource dataSource) throws DataAccessException, Throwable {
         if (this.healthCheckService.isValveOpenAfterIrrigation(dataSource, this.irrigationDurationInSecond.get())) {
             this.stopIrrigation(dataSource, null);
         }
         healthCheckService.checkSolarPowerLevel(dataSource);
+        this.healthCheckService.checkWaterflow(dataSource);
     }
 
     public long setIrrigationDuration(long durationInSecond) {
@@ -138,8 +140,6 @@ public class SmartGardenService {
 
     public void startIrrigationWhenLowHumidity(final DataSource dataSource) {
         try {
-
-            this.waterFlowSensor.startListenEvent();
 
             int dryLevelSum = 0;
             int temperatureSum = 0;
@@ -162,8 +162,6 @@ public class SmartGardenService {
             String sql = "INSERT INTO soil_status (datetime,drylevel,temperature_celsius) values(now(),?,?)";
             jdbcTemplate.update(sql, new Object[]{averageDryLevel, averageTemperature});
             logger.info(String.format("Waterflow=%sML", this.waterFlowSensor.readOutputValue().getTotalMillilitre()));
-            this.waterFlowSensor.stopListenEvent();
-
         } catch (Throwable t) {
             logger.fatal("startIrrigationWhenLowHumdity", t);
         } finally {
