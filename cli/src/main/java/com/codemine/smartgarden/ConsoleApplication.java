@@ -50,6 +50,7 @@ public class ConsoleApplication {
             if ("startIrrigationWhenLowHumidity".equals(action)) {
                 smartGardenService.startIrrigationWhenLowHumidity(dataSource);
             }
+            smartGardenService.shutdown();
         } catch (Throwable t) {
             logger.log(Priority.ERROR, "Console:main", t);
         } finally {

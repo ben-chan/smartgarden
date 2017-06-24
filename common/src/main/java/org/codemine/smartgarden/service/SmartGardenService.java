@@ -79,8 +79,8 @@ public class SmartGardenService {
     private Valve waterValve = null;
     private NotificationService notificationService = null;
     private HealthCheckService healthCheckService = null;
+    private GpioController gpioController=null;
     Map<String, String> config = null;
-
     public SmartGardenService(DataSource dataSource) throws Throwable {
         // provision gpio pin #01 as an output pin and turn on
         config = this.getConfig(dataSource);
@@ -91,7 +91,7 @@ public class SmartGardenService {
         this.notificationService = new NotificationService(config.get("notification.email"), config.get("notification.email.password"));
         this.mediaFileDirectory = config.get("monitor.mediaFilePath");
         boolean testing = Boolean.parseBoolean(config.get("general.testing"));
-        GpioController gpioController = GpioFactory.getInstance();
+        this.gpioController = GpioFactory.getInstance();
         if (testing) {
             this.camera = new MockCamera();
             this.soilHumiditySensor = new MockPollingSensor<>(new ModbusSoilHumiditySensor.OutputValue(30, 2600));
@@ -107,8 +107,7 @@ public class SmartGardenService {
 		I2CBus i2cBus = I2CFactory.getInstance(I2CBus.BUS_1);
             this.voltageCurrentSensor = new INA219VoltageCurrentSensor(i2cBus, 0x40);
         }
-        this.healthCheckService = new HealthCheckService(this.waterValve, this.voltageCurrentSensor,this.waterFlowSensor);
-        this.waterFlowSensor.startListenEvent();
+        this.healthCheckService = new HealthCheckService(this.waterValve, this.voltageCurrentSensor,this.waterFlowSensor);        
     }
 
     public Map<String, String> getConfig(DataSource dataSource) {
@@ -123,6 +122,10 @@ public class SmartGardenService {
 
     public File getImage(String filename) {
         return new File(config.get("monitor.mediaFilePath"), filename);
+    }
+    
+    public void shutdown(){
+	this.gpioController.shutdown();
     }
 
     public void healthCheck(DataSource dataSource) throws DataAccessException, Throwable {
@@ -174,7 +177,7 @@ public class SmartGardenService {
                 return -1;
             }
             this.inProgress.set(true);
-            this.waterFlowSensor.reset();
+            this.waterFlowSensor.startListenEvent();
             this.waterValve.on();
             JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
             KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -201,6 +204,7 @@ public class SmartGardenService {
                         final long duration = irrigationDurationInSecond.get() * 1000;
                         Thread.sleep(duration);
                         self.stopIrrigation(dataSource, historyId);
+                        self.waterFlowSensor.stopListenEvent();
                         logger.log(Level.INFO, String.format("start setPinStatus Low datetime=%s, duration=%s, historyId=%s", new Date().toString(), duration, historyId));
 
                         notificationService.sendAsyncEmail("Irrigation Finished",
