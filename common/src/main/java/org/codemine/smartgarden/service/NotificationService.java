@@ -15,11 +15,13 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.springframework.stereotype.Service;
 
 /**
  *
  * @author benchan
  */
+@Service
 public class NotificationService {
     
     private String email;

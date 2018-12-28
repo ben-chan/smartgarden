@@ -7,31 +7,29 @@ package org.codemine.smartgarden.model;
 
 import java.io.Serializable;
 import java.util.Date;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 
 /**
  *
  * @author root
  */
-public class IrrigationHistory implements Serializable{
-    private Integer id;
+@Entity
+public class IrrigationHistory implements Serializable {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @Temporal(TemporalType.TIMESTAMP)
     private Date startTime;
+    @Temporal(TemporalType.TIMESTAMP)
     private Date endTime;
     private String imageFilename;
     private int waterVolumeInML;
-
-    /**
-     * @return the id
-     */
-    public int getId() {
-        return id;
-    }
-
-    /**
-     * @param id the id to set
-     */
-    public void setId(int id) {
-        this.id = id;
-    }
 
     /**
      * @return the startTime
@@ -87,5 +85,19 @@ public class IrrigationHistory implements Serializable{
      */
     public void setWaterVolumeInML(int waterVolumeInML) {
         this.waterVolumeInML = waterVolumeInML;
+    }
+
+    /**
+     * @return the id
+     */
+    public Long getId() {
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(Long id) {
+        this.id = id;
     }
 }

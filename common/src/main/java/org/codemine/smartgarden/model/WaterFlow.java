@@ -5,24 +5,36 @@
  */
 package org.codemine.smartgarden.model;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 
 /**
  *
  * @author root
  */
-public class WaterFlow {
-    private int id;
-    private Date datime;
+@Entity
+public class WaterFlow implements Serializable {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date dateTime;
     private BigDecimal milliliter;
 
     public WaterFlow(BigDecimal milliliter) {
         this.milliliter = milliliter;
     }
-    
-    public WaterFlow(){
-        
+
+    public WaterFlow() {
+
     }
 
     /**
@@ -40,17 +52,31 @@ public class WaterFlow {
     }
 
     /**
-     * @return the datime
+     * @return the dateTime
      */
-    public Date getDatime() {
-        return datime;
+    public Date getDateTime() {
+        return dateTime;
     }
 
     /**
-     * @param datime the datime to set
+     * @param dateTime the dateTime to set
      */
-    public void setDatime(Date datime) {
-        this.datime = datime;
+    public void setDateTime(Date dateTime) {
+        this.dateTime = dateTime;
+    }
+
+    /**
+     * @return the id
+     */
+    public Long getId() {
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(Long id) {
+        this.id = id;
     }
 
 }

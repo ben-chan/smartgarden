@@ -6,54 +6,53 @@
 package org.codemine.smartgarden.model;
 
 import java.util.Date;
-import com.codemine.iot.device.sensor.ModbusSoilHumiditySensor;
+import org.codemine.iot.device.sensor.ModbusSoilHumiditySensor;
+import javax.persistence.Embedded;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 
 /**
  *
  * @author root
  */
-public class SoilStatus {    
+@Entity
+public class SoilStatus {
 
-    private long id;
-    private Date datetime;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date dateTime;
+    @Embedded
     private ModbusSoilHumiditySensor.OutputValue dryLevelAndTemperature;
-    
-    public SoilStatus(long id, Date datetime, ModbusSoilHumiditySensor.OutputValue dryLevelAndTemperature) {
-        this.id = id;
-        this.datetime = datetime;
-        this.dryLevelAndTemperature = dryLevelAndTemperature;
-    }    
 
-    public SoilStatus() {
-        
+    public SoilStatus(Long id, Date datetime, ModbusSoilHumiditySensor.OutputValue dryLevelAndTemperature) {
+        this.id = id;
+        this.dateTime = datetime;
+        this.dryLevelAndTemperature = dryLevelAndTemperature;
     }
 
-    /**
-     * @return the id
-     */
-    public long getId() {
-        return id;
+    public SoilStatus() {
+
     }
 
     /**
      * @return the datetime
      */
     public Date getDatetime() {
-        return datetime;
-    }
-
-    /**
-     * @param id the id to set
-     */
-    public void setId(long id) {
-        this.id = id;
+        return getDateTime();
     }
 
     /**
      * @param datetime the datetime to set
      */
     public void setDatetime(Date datetime) {
-        this.datetime = datetime;
+        this.setDateTime(datetime);
     }
 
     /**
@@ -69,6 +68,33 @@ public class SoilStatus {
     public void setDryLevelAndTemperature(ModbusSoilHumiditySensor.OutputValue dryLevelAndTemperature) {
         this.dryLevelAndTemperature = dryLevelAndTemperature;
     }
-   
-   
+
+    /**
+     * @return the id
+     */
+    public Long getId() {
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    /**
+     * @return the dateTime
+     */
+    public Date getDateTime() {
+        return dateTime;
+    }
+
+    /**
+     * @param dateTime the dateTime to set
+     */
+    public void setDateTime(Date dateTime) {
+        this.dateTime = dateTime;
+    }
+
 }

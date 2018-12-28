@@ -8,15 +8,15 @@ package org.codemine.smartgarden.model;
 import java.util.HashMap;
 import java.util.Map;
 
-
 /**
  *
  * @author demof
  */
 public class GardenStatus {
-    private Map<String,String> config=new HashMap<>();
-    private PowerStatus powerStatus=new PowerStatus();
-    private IrrigationStatus irrigationStatus=new IrrigationStatus();
+
+    private PowerStatus powerStatus = new PowerStatus();
+    private IrrigationStatus irrigationStatus = new IrrigationStatus();
+
     /**
      * @return the powerStatus
      */
@@ -29,20 +29,6 @@ public class GardenStatus {
      */
     public void setPowerStatus(PowerStatus powerStatus) {
         this.powerStatus = powerStatus;
-    }
-
-    /**
-     * @return the config
-     */
-    public Map<String,String> getConfig() {
-        return config;
-    }
-
-    /**
-     * @param config the config to set
-     */
-    public void setConfig(Map<String,String> config) {
-        this.config = config;
     }
 
     /**
@@ -59,5 +45,4 @@ public class GardenStatus {
         this.irrigationStatus = irrigationStatus;
     }
 
-    
 }

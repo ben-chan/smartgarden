@@ -5,12 +5,12 @@
  */
 package org.codemine.smartgarden.service;
 
-import com.codemine.iot.device.sensor.EventDrivenSensor;
-import com.codemine.iot.device.sensor.HallEffectWaterFlowSensor;
-import com.codemine.iot.device.sensor.INA219VoltageCurrentSensor;
-import com.codemine.iot.device.sensor.Sensor;
-import com.codemine.iot.device.valve.Valve;
-import com.codemine.iot.device.valve.WaterValve;
+import org.codemine.iot.device.sensor.EventDrivenSensor;
+import org.codemine.iot.device.sensor.HallEffectWaterFlowSensor;
+import org.codemine.iot.device.sensor.INA219VoltageCurrentSensor;
+import org.codemine.iot.device.sensor.Sensor;
+import org.codemine.iot.device.valve.Valve;
+import org.codemine.iot.device.valve.WaterValve;
 
 import java.math.BigDecimal;
 import java.sql.ResultSet;
@@ -25,11 +25,13 @@ import org.codemine.smartgarden.model.IrrigationHistory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Service;
 
 /**
  * 
  * @author BENCPCHAN
  */
+@Service
 public class HealthCheckService {
 
     private static final Logger logger = Logger
@@ -93,7 +95,7 @@ public class HealthCheckService {
 				public IrrigationHistory mapRow(ResultSet rs,
 					int i) throws SQLException {
 				    IrrigationHistory history = new IrrigationHistory();
-				    history.setId(rs.getInt("id"));
+				    history.setId(rs.getLong("id"));
 				    history.setStartTime(new Date(rs
 					    .getTimestamp("start_time")
 					    .getTime()));
