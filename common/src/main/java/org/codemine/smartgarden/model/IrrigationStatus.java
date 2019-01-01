@@ -12,10 +12,10 @@ package org.codemine.smartgarden.model;
 public class IrrigationStatus {
 
     private boolean waterValveOpen = false;
-    private WaterFlow waterflow = null;
+    private WaterflowStatus waterflow = null;
     private SoilStatus soilStatus = null;
 
-    public IrrigationStatus(WaterFlow waterflow, SoilStatus soilStatus) {
+    public IrrigationStatus(WaterflowStatus waterflow, SoilStatus soilStatus) {
         this.waterflow = waterflow;
         this.soilStatus = soilStatus;
     }
@@ -27,14 +27,14 @@ public class IrrigationStatus {
     /**
      * @return the waterflow
      */
-    public WaterFlow getWaterflow() {
+    public WaterflowStatus getWaterflow() {
         return waterflow;
     }
 
     /**
      * @param waterflow the waterflow to set
      */
-    public void setWaterflow(WaterFlow waterflow) {
+    public void setWaterflow(WaterflowStatus waterflow) {
         this.waterflow = waterflow;
     }
 

@@ -8,6 +8,9 @@ package org.codemine.smartgarden.model;
 import java.util.Date;
 import org.codemine.iot.device.sensor.INA219VoltageCurrentSensor;
 import java.io.Serializable;
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
+import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -15,6 +18,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.persistence.Transient;
 
 /**
  *
@@ -29,7 +33,14 @@ public class PowerStatus implements Serializable {
     @Temporal(TemporalType.TIMESTAMP)
     private Date dateTime;
     @Embedded
+     @AttributeOverrides({
+        @AttributeOverride(name="voltage",
+                           column=@Column(name="VOLTAGE")),
+        @AttributeOverride(name="currentInMA",
+                           column=@Column(name="CURRENT_IN_MA"))
+    })
     private INA219VoltageCurrentSensor.OutputValue voltageAndCurrent;
+    @Transient
     private int batteryLevelInPercent;
 
     public PowerStatus(Long id, Date dateTime, INA219VoltageCurrentSensor.OutputValue voltageAndCurrent) {

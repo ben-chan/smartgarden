@@ -13,74 +13,96 @@
     <artifactId>smartgarden-web</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
+    
+    <properties>
+        <spring.boot.version>1.5.8.RELEASE</spring.boot.version>
+    </properties>
+    
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <!-- Import dependency management from Spring Boot -->
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-parent</artifactId>
+                <version>${spring.boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 	
     <dependencies>
-        <dependency>
-            <groupId>org.codemine.smartgarden</groupId>
-            <artifactId>smartgarden-common</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.apache.tomcat</groupId>
-            <artifactId>tomcat-websocket</artifactId>
-            <version>8.0.33</version>
-        </dependency>
-  
-        <dependency>
-            <groupId>org.apache.tomcat</groupId>
-            <artifactId>tomcat-dbcp</artifactId>
-            <version>8.0.33</version>
-        </dependency>
-
-
-        <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>5.1.6</version>
-        </dependency>
-        
-
+           
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-collections4</artifactId>
             <version>4.1</version>
         </dependency>
-
-
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <optional>true</optional>
+        </dependency>
+        
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <version>1.3.5.RELEASE</version>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-tomcat</artifactId>
-            <version>1.3.5.RELEASE</version>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
-		
 
-
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>de.codecentric</groupId>
+            <artifactId>spring-boot-admin-starter-client</artifactId>
+            <version>1.5.4</version>
+        </dependency>
+       
+      
+        <!-- https://mvnrepositor.ycom/artifact/org.apache.commons/commons-lang3 -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>smartgarden-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>1.3.5.RELEASE</version>
-
+                <version>1.5.8.RELEASE</version> 
+                <configuration>
+                    <executable>true</executable>
+                    <!--<addResources>true</addResources>-->
+                </configuration>
+                
                 <executions>
                     <execution>
+                        <configuration>
+                            <mainClass>org.codemine.smartgarden.WebApplication</mainClass>
+                        </configuration>
                         <goals>
-                            <goal>repackage</goal>
+                            <goal>repackage</goal>                           
                         </goals>
                     </execution>
                 </executions>
             </plugin>
-			
         </plugins>
     </build>
+
     <name>smartgarden-web</name>
 </project>

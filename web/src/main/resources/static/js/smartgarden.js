@@ -152,7 +152,7 @@ var smartgarden = {
                     // the chart.
                     data: chartDataList,
                     // The name of the data record attribute that contains x-visitss.
-                    xkey: 'datetime',
+                    xkey: 'dateTime',
                     // A list of names of data record attributes that contain y-visitss.
                     ykeys: ['voltage'],
                     // Labels for the ykeys -- will be displayed when you hover over the

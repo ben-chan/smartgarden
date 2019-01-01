@@ -16,7 +16,6 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.sql.DataSource;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -34,6 +33,7 @@ import javax.imageio.ImageIO;
 import org.codemine.smartgarden.model.GardenStatus;
 import org.codemine.smartgarden.model.PowerStatus;
 import org.codemine.smartgarden.model.SoilStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
@@ -47,28 +47,19 @@ public class SmartGardenServlet extends HttpServlet {
     public static String SERVICE_KEY = "SmartGardenService";
     private Logger logger = Logger.getLogger(SmartGardenServlet.class);
 
+    @Autowired
+    private SmartGardenService smartGardenService;
+
     @Override
     public void init() throws ServletException {
         super.init(); //To change body of generated methods, choose Tools | Templates.
     }
 
-    private DataSource getDataSource() {
-        try {
-            ApplicationContext appContext = WebApplicationContextUtils.getWebApplicationContext(this.getServletContext());
-            DataSource dataSource = (DataSource) appContext.getBean("dataSource");
-            return dataSource;
-        } catch (Throwable ex) {
-            Logger.getLogger(SmartGardenServlet.class.getName()).log(Level.ERROR, null, ex);
-        }
-        return null;
-    }
-
     @Override
     public void init(ServletConfig config) throws ServletException {
         try {
-            super.init(config); //To change body of generated methods, choose Tools | Templates.           
-            config.getServletContext().setAttribute(SERVICE_KEY,
-                    new SmartGardenService(this.getDataSource()));
+            ApplicationContext appContext = WebApplicationContextUtils.getWebApplicationContext(config.getServletContext());
+            smartGardenService = (SmartGardenService) appContext.getBean("smartGardenService");
         } catch (Throwable t) {
             logger.log(Level.FATAL, "init", t);
         }
@@ -91,7 +82,6 @@ public class SmartGardenServlet extends HttpServlet {
         mapper.setDateFormat(chartDateFormat);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         RequestResult requestResult = new RequestResult();
-        SmartGardenService smartGardenService = (SmartGardenService) request.getServletContext().getAttribute(SERVICE_KEY);
         String action = (String) request.getParameter("action");
         if (action.equalsIgnoreCase("get_image")) {
             String filename = (String) request.getParameter("filename");
@@ -108,20 +98,20 @@ public class SmartGardenServlet extends HttpServlet {
                 if (action.equalsIgnoreCase("start_irrigation")) {
                     logger.log(Level.INFO, "processRequest:start_irrigation");
                     requestResult = new RequestResult<Integer>();
-                    Integer historyId = smartGardenService.startIrrigationAsync(this.getDataSource());
+                    Integer historyId = smartGardenService.startIrrigationAsync();
                     requestResult.setSuccess(true);
                     requestResult.setValue(historyId);
                 }
                 if (action.equalsIgnoreCase("get_irrigation_history")) {
                     logger.log(Level.INFO, "processRequest:get_irrigation_history");
-                    List<IrrigationHistory> historyList = smartGardenService.getIrrigationHistoryList(this.getDataSource(), 10);
+                    List<IrrigationHistory> historyList = smartGardenService.getIrrigationHistoryList(10);
                     requestResult.setValue(historyList);
                     requestResult.setSuccess(true);
                 }
 
                 if (action.equalsIgnoreCase("get_garden_status")) {
                     logger.log(Level.INFO, "processRequest:get_garden_status");
-                    GardenStatus gardenStatus = smartGardenService.getGardenStatus(this.getDataSource());
+                    GardenStatus gardenStatus = smartGardenService.getGardenStatus();
                     requestResult.setValue(gardenStatus);
                     requestResult.setSuccess(true);
                 }
@@ -134,7 +124,7 @@ public class SmartGardenServlet extends HttpServlet {
                     if (!StringUtils.isEmpty(historyIdParam)) {
                         historyId = Integer.parseInt(historyIdParam);
                     }
-                    smartGardenService.stopIrrigation(this.getDataSource(), historyId);
+                    smartGardenService.stopIrrigation(historyId);
                     requestResult.setSuccess(true);
                 }
 
@@ -148,14 +138,14 @@ public class SmartGardenServlet extends HttpServlet {
 
                 if (action.equalsIgnoreCase("get_soil_status_history")) {
                     logger.log(Level.INFO, "processRequest:get_soil_status_history");
-                    List<SoilStatus> historyList = smartGardenService.getSoilStatusHistory(this.getDataSource(), 10);
+                    List<SoilStatus> historyList = smartGardenService.getSoilStatusHistory(10);
                     requestResult.setValue(historyList);
                     requestResult.setSuccess(true);
                 }
 
                 if (action.equalsIgnoreCase("get_power_status_history")) {
                     logger.log(Level.INFO, "processRequest:get_power_status_history");
-                    List<PowerStatus> historyList = smartGardenService.getPowerStatusHistory(this.getDataSource(), 10);
+                    List<PowerStatus> historyList = smartGardenService.getPowerStatusHistory(10);
                     requestResult.setValue(historyList);
                     requestResult.setSuccess(true);
                 }

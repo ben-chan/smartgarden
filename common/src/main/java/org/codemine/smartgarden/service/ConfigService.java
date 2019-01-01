@@ -5,13 +5,13 @@
  */
 package org.codemine.smartgarden.service;
 
-import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.function.Function;
 import org.codemine.smartgarden.model.Config;
 import org.codemine.smartgarden.repository.ConfigRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,13 +24,6 @@ public class ConfigService {
 
     @Autowired
     private ConfigRepository configRepository;
-
-    @Autowired
-    private Environment environment;
-
-    public boolean isProduction() {
-        return Arrays.asList(environment.getActiveProfiles()).contains("prod");
-    }
 
     @Transactional(readOnly = false)
     public void initDefaultConfigIfMissing() {
@@ -70,4 +63,13 @@ public class ConfigService {
             this.configRepository.save(config);
         }
     }
+
+    public Map<String, String> getAllConfig() {
+        Map<String, String> allConfig = new HashMap<>();
+        this.configRepository.findAll().stream().forEach(config -> {
+            allConfig.put(config.getName(), config.getValue());
+        });
+        return allConfig;
+    }
+
 }

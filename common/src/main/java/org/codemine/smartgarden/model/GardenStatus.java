@@ -16,6 +16,7 @@ public class GardenStatus {
 
     private PowerStatus powerStatus = new PowerStatus();
     private IrrigationStatus irrigationStatus = new IrrigationStatus();
+    private Map<String, String> config = new HashMap<>();
 
     /**
      * @return the powerStatus
@@ -43,6 +44,20 @@ public class GardenStatus {
      */
     public void setIrrigationStatus(IrrigationStatus irrigationStatus) {
         this.irrigationStatus = irrigationStatus;
+    }
+
+    /**
+     * @return the config
+     */
+    public Map<String, String> getConfig() {
+        return config;
+    }
+
+    /**
+     * @param config the config to set
+     */
+    public void setConfig(Map<String, String> config) {
+        this.config = config;
     }
 
 }

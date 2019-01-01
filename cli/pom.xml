@@ -13,6 +13,25 @@
     <artifactId>smartgarden-cli</artifactId>
     <version>1.0-SNAPSHOT</version>
     
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>1.8</java.version>
+        <spring.boot.version>1.5.8.RELEASE</spring.boot.version>
+    </properties>
+    
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <!-- Import dependency management from Spring Boot -->
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-parent</artifactId>
+                <version>${spring.boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     
     <dependencies>
         <dependency>
@@ -22,34 +41,31 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
-            <version>1.4.3.RELEASE</version>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
     </dependencies>
 
     <build>
-        <plugins>           
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.19</version>
-                <configuration>
-                    <skipTests>true</skipTests>
-                </configuration>
-            </plugin>
+        <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>1.4.3.RELEASE</version>
+                <version>1.5.8.RELEASE</version> 
+                <configuration>
+                    <executable>true</executable>
+                </configuration>
+                
                 <executions>
                     <execution>
+                        <configuration>
+                            <mainClass>org.codemine.smartgarden.ConsoleApplication</mainClass>
+                        </configuration>
                         <goals>
-                            <goal>repackage</goal>
+                            <goal>repackage</goal>                           
                         </goals>
                     </execution>
                 </executions>
             </plugin>
         </plugins>
     </build>
-    <name>smartgarden-cli</name>
 </project>

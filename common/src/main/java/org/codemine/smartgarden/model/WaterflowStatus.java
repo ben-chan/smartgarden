@@ -8,10 +8,12 @@ package org.codemine.smartgarden.model;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
@@ -20,35 +22,19 @@ import javax.persistence.TemporalType;
  * @author root
  */
 @Entity
-public class WaterFlow implements Serializable {
+@Table(name = "waterflow_status")
+public class WaterflowStatus implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Temporal(TemporalType.TIMESTAMP)
     private Date dateTime;
-    private BigDecimal milliliter;
+    @Column(name="volume_in_ml")
+    private BigDecimal volumeInML;
 
-    public WaterFlow(BigDecimal milliliter) {
-        this.milliliter = milliliter;
-    }
+    public WaterflowStatus() {
 
-    public WaterFlow() {
-
-    }
-
-    /**
-     * @param milliliter the milliliter to set
-     */
-    public void setMilliliter(BigDecimal milliliter) {
-        this.milliliter = milliliter;
-    }
-
-    /**
-     * @return the milliliter
-     */
-    public BigDecimal getMilliliter() {
-        return milliliter;
     }
 
     /**
@@ -77,6 +63,20 @@ public class WaterFlow implements Serializable {
      */
     public void setId(Long id) {
         this.id = id;
+    }
+
+    /**
+     * @return the volumeInML
+     */
+    public BigDecimal getVolumeInML() {
+        return volumeInML;
+    }
+
+    /**
+     * @param volumeInML the volumeInML to set
+     */
+    public void setVolumeInML(BigDecimal volumeInML) {
+        this.volumeInML = volumeInML;
     }
 
 }

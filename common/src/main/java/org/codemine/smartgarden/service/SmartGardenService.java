@@ -7,11 +7,6 @@ package org.codemine.smartgarden.service;
 
 import com.mysql.cj.api.jdbc.Statement;
 import com.pi4j.io.gpio.GpioController;
-import com.pi4j.io.gpio.GpioFactory;
-import com.pi4j.io.gpio.RaspiPin;
-import com.pi4j.io.i2c.I2CBus;
-import com.pi4j.io.i2c.I2CFactory;
-import java.awt.Dimension;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -37,22 +32,16 @@ import javax.annotation.PostConstruct;
 
 import javax.imageio.ImageIO;
 import org.codemine.iot.device.camera.Camera;
-import org.codemine.iot.device.camera.MockCamera;
-import org.codemine.iot.device.camera.USBCamera;
 import org.codemine.iot.device.sensor.EventDrivenSensor;
 import org.codemine.iot.device.sensor.HallEffectWaterFlowSensor;
 import org.codemine.iot.device.sensor.INA219VoltageCurrentSensor;
-import org.codemine.iot.device.sensor.MockPollingSensor;
 import org.codemine.iot.device.sensor.ModbusSoilHumiditySensor;
 import org.codemine.iot.device.sensor.Sensor;
-import org.codemine.iot.device.valve.MockValve;
 import org.codemine.iot.device.valve.Valve;
 import org.codemine.iot.device.valve.WaterValve;
 import org.codemine.smartgarden.model.*;
-import org.codemine.smartgarden.repository.IrrigationHistoryRepository;
-import org.codemine.smartgarden.repository.PowerStatusRepository;
-import org.codemine.smartgarden.repository.SoilStatusRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -60,6 +49,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  *
@@ -77,31 +67,43 @@ public class SmartGardenService implements Closeable {
     private long soilDryLevelPollFrequencyInMS = 2000;
 
     private String mediaFileDirectory = "/tmp";
+
+    @Autowired
     private Camera camera = null;
 
+    @Autowired
     private Sensor<ModbusSoilHumiditySensor.OutputValue> soilHumiditySensor = null;
+
+    @Autowired
     private EventDrivenSensor<HallEffectWaterFlowSensor.OutputValue> waterFlowSensor = null;
+
+    @Autowired
     private Sensor<INA219VoltageCurrentSensor.OutputValue> voltageCurrentSensor = null;
 
+    @Autowired
     private Valve waterValve = null;
+
+    @Autowired
     private NotificationService notificationService = null;
+
+    @Autowired
     private HealthCheckService healthCheckService = null;
+
+    @Autowired
     private GpioController gpioController = null;
 
     @Autowired
-    private IrrigationHistoryRepository irrigationHistoryRepository;
-
-    @Autowired
-    private PowerStatusRepository powerStatusRepository;
-
-    @Autowired
-    private SoilStatusRepository soilStatusRepository;
-
+    private JdbcTemplate jdbcTemplate;
     @Autowired
     private ConfigService configService;
 
     public SmartGardenService() {
 
+    }
+
+    @Bean
+    private static NotificationService notificationService(ConfigService configService) {
+        return new NotificationService(configService.getValue("notification.email"), configService.getValue("notification.email.password"));
     }
 
     @PostConstruct
@@ -114,25 +116,8 @@ public class SmartGardenService implements Closeable {
         this.soilDryLevelPollCount = configService.getValue("soil.dryLevelPollCount", Long::parseLong);
         this.soilDryLevelPollFrequencyInMS = configService.getValue("soil.dryLevelPollFrequencyInMS", Long::parseLong);
 
-        this.notificationService = new NotificationService(configService.getValue("notification.email"), configService.getValue("notification.email.password"));
         this.mediaFileDirectory = configService.getValue("monitor.mediaFilePath");
-        this.gpioController = GpioFactory.getInstance();
-        if (!this.configService.isProduction()) {
-            this.camera = new MockCamera();
-            this.soilHumiditySensor = new MockPollingSensor<>(new ModbusSoilHumiditySensor.OutputValue(30, 2600));
-            this.waterValve = new MockValve();
-            this.waterFlowSensor = new HallEffectWaterFlowSensor(gpioController, RaspiPin.GPIO_25);
-            this.voltageCurrentSensor = new MockPollingSensor<>(new INA219VoltageCurrentSensor.OutputValue(12.0, 3.0));
-        } else {
-            this.camera = new USBCamera(new Dimension(configService.getValue("image.width", Integer::parseInt), configService.getValue("image.height", Integer::parseInt)));
-            this.soilHumiditySensor = new ModbusSoilHumiditySensor(configService.getValue("soil.sensorSerialPortName"));
 
-            this.waterValve = new WaterValve(gpioController, RaspiPin.GPIO_00);
-            this.waterFlowSensor = new HallEffectWaterFlowSensor(gpioController, RaspiPin.GPIO_25);
-            I2CBus i2cBus = I2CFactory.getInstance(I2CBus.BUS_1);
-            this.voltageCurrentSensor = new INA219VoltageCurrentSensor(i2cBus, 0x40);
-        }
-        this.healthCheckService = new HealthCheckService(this.waterValve, this.voltageCurrentSensor, this.waterFlowSensor);
     }
 
     public File getImage(String filename) {
@@ -143,12 +128,12 @@ public class SmartGardenService implements Closeable {
         this.gpioController.shutdown();
     }
 
-    public void healthCheck(DataSource dataSource) throws DataAccessException, Throwable {
-        if (this.healthCheckService.isValveOpenAfterIrrigation(dataSource, this.irrigationDurationInSecond.get())) {
-            this.stopIrrigation(dataSource, null);
+    public void healthCheck() throws DataAccessException, Throwable {
+        if (this.healthCheckService.isValveOpenAfterIrrigation(this.irrigationDurationInSecond.get())) {
+            this.stopIrrigation(null);
         }
-        healthCheckService.checkSolarPowerLevel(dataSource);
-        this.healthCheckService.checkWaterflow(dataSource);
+        healthCheckService.checkSolarPowerLevel();
+        this.healthCheckService.checkWaterflow();
     }
 
     public long setIrrigationDuration(long durationInSecond) {
@@ -156,7 +141,8 @@ public class SmartGardenService implements Closeable {
         return irrigationDurationInSecond.get();
     }
 
-    public void startIrrigationWhenLowHumidity(final DataSource dataSource) {
+    @Transactional(readOnly = false)
+    public void startIrrigationWhenLowHumidity() {
         try {
 
             int dryLevelSum = 0;
@@ -173,10 +159,9 @@ public class SmartGardenService implements Closeable {
             final long averageDryLevel = dryLevelSum / soilDryLevelPollCount;
             final long averageTemperature = temperatureSum / soilDryLevelPollCount;
             if (averageDryLevel > soilMaxDryLevelAllowed) {
-                this.startIrrigationAsync(dataSource);
+                this.startIrrigationAsync();
             }
-            JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-            String sql = "INSERT INTO soil_status (datetime,drylevel,temperature_celsius) values(now(),?,?)";
+            String sql = "INSERT INTO soil_status (date_time,dry_level,temperature_in_celsius) values(now(),?,?)";
             jdbcTemplate.update(sql, new Object[]{averageDryLevel, averageTemperature});
         } catch (Throwable t) {
             logger.fatal("startIrrigationWhenLowHumdity", t);
@@ -186,7 +171,7 @@ public class SmartGardenService implements Closeable {
 
     }
 
-    public Integer startIrrigationAsync(final DataSource dataSource) throws SQLException {
+    public Integer startIrrigationAsync() throws SQLException {
         try {
             if (this.inProgress.get()) {
                 return -1;
@@ -194,7 +179,6 @@ public class SmartGardenService implements Closeable {
             this.inProgress.set(true);
             this.waterFlowSensor.startListenEvent();
             this.waterValve.on();
-            JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
             KeyHolder keyHolder = new GeneratedKeyHolder();
             jdbcTemplate.update(new PreparedStatementCreator() {
                 @Override
@@ -218,7 +202,7 @@ public class SmartGardenService implements Closeable {
                     try {
                         final long duration = irrigationDurationInSecond.get() * 1000;
                         Thread.sleep(duration);
-                        self.stopIrrigation(dataSource, historyId);
+                        self.stopIrrigation(historyId);
                         self.waterFlowSensor.stopListenEvent();
                         logger.log(Level.INFO, String.format("start setPinStatus Low datetime=%s, duration=%s, historyId=%s", new Date().toString(), duration, historyId));
 
@@ -280,7 +264,7 @@ public class SmartGardenService implements Closeable {
         return imageFilename;
     }
 
-    public boolean stopIrrigation(DataSource dataSource, Integer historyId) {
+    public boolean stopIrrigation(Integer historyId) {
         if (!inProgress.get()) {
             return true;
         }
@@ -288,8 +272,7 @@ public class SmartGardenService implements Closeable {
         inProgress.set(false);
         try {
             String imageFilename = this.takePhoto();
-            JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-            jdbcTemplate.update("update irrigation_history set end_time=now(),image_filename=?,water_volume_ml=? where id=? and end_time is null",
+            jdbcTemplate.update("update irrigation_history set end_time=now(),image_filename=?,water_volume_in_ml=? where id=? and end_time is null",
                     new Object[]{imageFilename, this.waterFlowSensor.readOutputValue().getTotalMillilitre(), historyId});
         } catch (Throwable t) {
             logger.error("update database", t);
@@ -298,16 +281,15 @@ public class SmartGardenService implements Closeable {
         return true;
     }
 
-    public List<SoilStatus> getSoilStatusHistory(DataSource dataSource, int itemCount) {
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        return jdbcTemplate.query(String.format("select id,drylevel,temperature_celsius,datetime from soil_status order by id desc limit %s", itemCount),
+    public List<SoilStatus> getSoilStatusHistory(int itemCount) {
+        return jdbcTemplate.query(String.format("select id,dry_level,temperature_in_celsius,date_time from soil_status order by id desc limit %s", itemCount),
                 new RowMapper<SoilStatus>() {
             @Override
             public SoilStatus mapRow(ResultSet rs, int i) throws SQLException {
                 SoilStatus soilStatus = new SoilStatus();
                 soilStatus.setId(rs.getLong("id"));
-                soilStatus.setDatetime(new Timestamp(rs.getTimestamp("datetime").getTime()));
-                ModbusSoilHumiditySensor.OutputValue drylevelAndTemperature = new ModbusSoilHumiditySensor.OutputValue(rs.getInt("temperature_celsius"), rs.getInt("drylevel"));
+                soilStatus.setDatetime(new Timestamp(rs.getTimestamp("date_time").getTime()));
+                ModbusSoilHumiditySensor.OutputValue drylevelAndTemperature = new ModbusSoilHumiditySensor.OutputValue(rs.getInt("temperature_in_celsius"), rs.getInt("dry_level"));
                 soilStatus.setDryLevelAndTemperature(drylevelAndTemperature);
                 return soilStatus;
             }
@@ -315,17 +297,16 @@ public class SmartGardenService implements Closeable {
         }, new Object[]{});
     }
 
-    public List<PowerStatus> getPowerStatusHistory(DataSource dataSource, int itemCount) {
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        return jdbcTemplate.query(String.format("select id,voltage,current_ma,datetime from power_status order by id desc limit %s", itemCount),
+    public List<PowerStatus> getPowerStatusHistory(int itemCount) {
+        return jdbcTemplate.query(String.format("select id,voltage,current_in_ma,date_time from power_status order by id desc limit %s", itemCount),
                 new RowMapper<PowerStatus>() {
             @Override
             public PowerStatus mapRow(ResultSet rs, int i) throws SQLException {
                 PowerStatus powerStatus = new PowerStatus();
                 powerStatus.setId(rs.getLong("id"));
-                powerStatus.setDateTime(new Timestamp(rs.getTimestamp("datetime").getTime()));
+                powerStatus.setDateTime(new Timestamp(rs.getTimestamp("date_time").getTime()));
                 INA219VoltageCurrentSensor.OutputValue voltageAndCurrent
-                        = new INA219VoltageCurrentSensor.OutputValue(rs.getDouble("voltage"), rs.getDouble("current_ma"));
+                        = new INA219VoltageCurrentSensor.OutputValue(rs.getDouble("voltage"), rs.getDouble("current_in_ma"));
                 powerStatus.setVoltageAndCurrent(voltageAndCurrent);
                 return powerStatus;
             }
@@ -333,17 +314,16 @@ public class SmartGardenService implements Closeable {
         }, new Object[]{});
     }
 
-    public IrrigationHistory getLastIrrigationHistory(DataSource dataSource) {
-        List<IrrigationHistory> irrigationHistoryList = getIrrigationHistoryList(dataSource, 1);
+    public IrrigationHistory getLastIrrigationHistory() {
+        List<IrrigationHistory> irrigationHistoryList = getIrrigationHistoryList(1);
         if (irrigationHistoryList.isEmpty()) {
             return new IrrigationHistory();
         }
         return irrigationHistoryList.get(0);
     }
 
-    public List<IrrigationHistory> getIrrigationHistoryList(DataSource dataSource, int itemCount) {
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        return jdbcTemplate.query(String.format("select id,start_time,end_time,image_filename,water_volume_ml from irrigation_history order by id desc limit %s", itemCount),
+    public List<IrrigationHistory> getIrrigationHistoryList(int itemCount) {
+        return jdbcTemplate.query(String.format("select id,start_time,end_time,image_filename,water_volume_in_ml from irrigation_history order by id desc limit %s", itemCount),
                 new RowMapper<IrrigationHistory>() {
             @Override
             public IrrigationHistory mapRow(ResultSet rs, int i) throws SQLException {
@@ -354,14 +334,14 @@ public class SmartGardenService implements Closeable {
                     history.setEndTime(new Date(rs.getTimestamp("end_time").getTime()));
                 }
                 history.setImageFilename(rs.getString("image_filename"));
-                history.setWaterVolumeInML(rs.getInt("water_volume_ml"));
+                history.setWaterVolumeInML(rs.getInt("water_volume_in_ml"));
                 return history;
             }
 
         }, new Object[]{});
     }
 
-    public GardenStatus getGardenStatus(DataSource dataSource) throws Throwable {
+    public GardenStatus getGardenStatus() throws Throwable {
         GardenStatus gardenStatus = new GardenStatus();
 
         PowerStatus powerStatus = new PowerStatus();
@@ -370,7 +350,7 @@ public class SmartGardenService implements Closeable {
         gardenStatus.setPowerStatus(powerStatus);
 
         gardenStatus.setIrrigationStatus(this.getIrrigationStatus());
-
+        gardenStatus.setConfig(this.configService.getAllConfig());
         return gardenStatus;
     }
 
@@ -383,8 +363,8 @@ public class SmartGardenService implements Closeable {
 
         irrigationStatus.setWaterValveOpen(this.waterValve.getStatus() == Valve.Status.On);
 
-        WaterFlow waterFlow = new WaterFlow();
-        waterFlow.setMilliliter(this.waterFlowSensor.readOutputValue().getTotalMillilitre());
+        WaterflowStatus waterFlow = new WaterflowStatus();
+        waterFlow.setVolumeInML(this.waterFlowSensor.readOutputValue().getTotalMillilitre());
         irrigationStatus.setWaterflow(waterFlow);
 
         return irrigationStatus;

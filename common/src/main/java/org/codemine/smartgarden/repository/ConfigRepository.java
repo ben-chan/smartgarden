@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
  *
  * @author demof
  */
-public interface ConfigRepository extends JpaRepository<Config,Long>{
+public interface ConfigRepository extends JpaRepository<Config, Long> {
+
     Config findByName(String name);
 }

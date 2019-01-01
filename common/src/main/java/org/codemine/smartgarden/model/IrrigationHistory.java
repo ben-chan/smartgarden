@@ -7,6 +7,7 @@ package org.codemine.smartgarden.model;
 
 import java.io.Serializable;
 import java.util.Date;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -29,6 +30,7 @@ public class IrrigationHistory implements Serializable {
     @Temporal(TemporalType.TIMESTAMP)
     private Date endTime;
     private String imageFilename;
+    @Column(name="water_volume_in_ml")
     private int waterVolumeInML;
 
     /**
